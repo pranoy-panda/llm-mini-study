@@ -1,0 +1,10 @@
+torch>=2.1
+transformers
+datasets
+accelerate
+peft
+scikit-learn
+matplotlib
+seaborn
+tqdm
+triton
