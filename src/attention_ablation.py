@@ -1,5 +1,17 @@
-import torch
 import torch.nn as nn
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+import os
+
+from src.finetune import (
+    build_tiny_dataset,
+    collate_pad,
+    train_short_run,
+    eval_perplexity,
+    TextDataset
+)
 
 def attention_ablation_hook(module, input, output):
     """
@@ -107,5 +119,6 @@ def train_ablation_run(
         "perplexities": perplexities,
     }
 
-# In your main script or notebook, you would run this like:
+# In main script or notebook, we would run this like:
 # ablation_res = train_ablation_run(...)
+
