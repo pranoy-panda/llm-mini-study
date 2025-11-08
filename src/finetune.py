@@ -244,6 +244,7 @@ def train_short_run(
     lr: float = 1e-4,
     max_grad_norm: float = 1.0,
     save_dir: str = "outputs",
+    optimizer_name: str = "AdamW",
 ):
     """Train a model for a small number of steps and return diagnostics.
 
@@ -290,7 +291,12 @@ def train_short_run(
     loader = DataLoader(tiny_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     # Optimizer over parameters with requires_grad
-    optim = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+    if optimizer_name == "AdamW":
+        optim = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+    elif optimizer_name == "SGD":
+        optim = torch.optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, momentum=0.9)
+    else:
+        raise ValueError(f"Unsupported optimizer: {optimizer_name}")
 
     # Reset peak memory counters if CUDA
     if device.startswith("cuda") and torch.cuda.is_available():
@@ -310,10 +316,17 @@ def train_short_run(
             input_ids = input_ids.to(device)
             attention_mask = attention_mask.to(device)
 
+	    # input_ids  = [batch_size, seq_len]
+	    # attention_mask shape = [batch_size, seq_len]
+            # labels (if sent as inputs then loss are also computed) shape = [batch_size, seq_len]
             outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=input_ids)
+            # outputs.loss: mean cross-entropy loss (nn.CrossEntropyLoss), tokenwise over all tokens (excluding -100 labels).
+            # outputs.logits: [batch_size, seq_len, vocab_size]	raw prediction scores before softmax
+            # outputs.past_key_values: attention tensors (used for faster generation)
+            # outputs.hidden_states: [num_layers+1, batch_size, seq_len, hidden_size]; returned if output_hidden_states=True
+            # output.attentions: per-layer attention weights (optional)
+ 
             
-            # outputs.loss: cross-entropy loss (specifically nn.CrossEntropyLoss), applied tokenwise over the vocabulary logits.
-            # Also, its the mean loss over non-masked tokens (scalar), i.e., scalar over tokens
             loss = outputs.loss
             # Backprop
             loss.backward()
