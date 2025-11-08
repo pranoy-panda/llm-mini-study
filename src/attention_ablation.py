@@ -14,7 +14,7 @@ Thus to compute the representation for a given token, the model is forced to tak
     attention_scores = output[0]
     
     # Set attention scores to zeros
-    ablated_scores = torch.zeros_like(attention_scores)
+    ablated_scores = torch.zeros_like(attention_scores[0])
     
     # Return the modified scores
     return (ablated_scores,) + output[1:]
@@ -22,7 +22,7 @@ Thus to compute the representation for a given token, the model is forced to tak
 # Apply the hook to the attention modules of the model
 def apply_attention_ablation(model):
     for layer in model.transformer.h:
-        layer.attn.register_forward_pre_hook(attention_ablation_hook)
+        layer.attn.register_forward_hook(attention_ablation_hook)
 
 # Now, let's integrate this into a training run.
 # We'll create a new training function for this experiment.
