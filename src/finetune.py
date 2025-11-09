@@ -36,6 +36,8 @@ from peft import LoraConfig, get_peft_model
 import matplotlib.pyplot as plt
 import psutil
 
+from src.eval import eval_perplexity
+
 # -------------------- Utilities --------------------
 
 def count_trainable_params(model: torch.nn.Module) -> int:
@@ -130,34 +132,6 @@ def build_tiny_dataset(tokenizer: AutoTokenizer, split: str = "train", max_total
         if tot >= max_total_tokens:
             break
     return TextDataset(tokenized), raw_selected
-
-
-# -------------------- Evaluation functions --------------------
-
-def eval_perplexity(model: torch.nn.Module, dataloader: DataLoader, device: str, tokenizer_pad_id: int) -> float:
-    """Compute per-token perplexity on the given dataset. Uses labels=input_ids.
-
-    Note: For causal LM we pass labels=input_ids and let the model compute loss per token.
-
-    Returns perplexity (float).
-    """
-    model.eval()
-    total_nll = 0.0
-    total_tokens = 0
-    with torch.no_grad():
-        for input_ids, attention_mask in dataloader:
-            input_ids = input_ids.to(device)  # (B, L)
-            attention_mask = attention_mask.to(device)  # (B, L)
-            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=input_ids)
-            # outputs.loss is mean loss over all non-ignored tokens (in nats because model returns loss in natural log)
-            n_tokens = int(attention_mask.sum().item())
-            batch_loss = float(outputs.loss.item()) * n_tokens
-            total_nll += batch_loss
-            total_tokens += n_tokens
-    per_token_loss = total_nll / total_tokens
-    perplexity = math.exp(per_token_loss)
-    model.train() # Set model back to train mode
-    return perplexity
 
 
 def sst2_zero_shot_accuracy(model: torch.nn.Module, tokenizer: AutoTokenizer, device: str, num_examples: int = 200) -> float:
