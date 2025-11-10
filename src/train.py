@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import DataLoader
-from transformers import AdamW
 from tqdm.auto import tqdm
 
 def train_classifier(model, tokenizer, train_dataset, device, epochs=3, lr=2e-5, batch_size=16):
@@ -20,7 +19,7 @@ def train_classifier(model, tokenizer, train_dataset, device, epochs=3, lr=2e-5,
         torch.nn.Module: The fine-tuned model.
     """
     # Set up DataLoader
-    def nli_collate_fn(batch, tokenizer):
+    def nli_collate_fn(batch):
         premises = [item['premise'] for item in batch]
         hypotheses = [item['hypothesis'] for item in batch]
         labels = [item['label'] for item in batch]
@@ -32,7 +31,7 @@ def train_classifier(model, tokenizer, train_dataset, device, epochs=3, lr=2e-5,
     loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=nli_collate_fn, shuffle=True)
 
     # Set up optimizer
-    optimizer = AdamW(model.parameters(), lr=lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
     model.to(device)
     model.train()
 
