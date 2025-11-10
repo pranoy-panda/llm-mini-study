@@ -46,9 +46,12 @@ def eval_classification_accuracy(model, tokenizer, test_dataset, device, batch_s
     """
     # Set up DataLoader
     def collate_fn(batch):
-        texts = [item['review_body'] for item in batch]
-        labels = [item['label'] for item in batch]
-        inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+        premises = [item['premise'] for item in batch]
+	hypotheses = [item['hypothesis'] for item in batch]
+	labels = [item['label'] for item in batch]
+    
+	# Format the input as "premise [SEP] hypothesis"
+        inputs = tokenizer(premises, hypotheses, padding=True, truncation=True, return_tensors="pt")
         inputs['labels'] = torch.tensor(labels, dtype=torch.long)
         return inputs
 
