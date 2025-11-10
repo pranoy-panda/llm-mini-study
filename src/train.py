@@ -20,15 +20,14 @@ def train_classifier(model, tokenizer, train_dataset, device, epochs=3, lr=2e-5,
         torch.nn.Module: The fine-tuned model.
     """
     # Set up DataLoader
-	def nli_collate_fn(batch, tokenizer):
-		premises = [item['premise'] for item in batch]
-		hypotheses = [item['hypothesis'] for item in batch]
-		labels = [item['label'] for item in batch]
-    
-    # Format the input as "premise [SEP] hypothesis"
-    inputs = tokenizer(premises, hypotheses, padding=True, truncation=True, return_tensors="pt")
-    inputs['labels'] = torch.tensor(labels, dtype=torch.long)
-    return inputs
+    def nli_collate_fn(batch, tokenizer):
+        premises = [item['premise'] for item in batch]
+        hypotheses = [item['hypothesis'] for item in batch]
+        labels = [item['label'] for item in batch]
+        # Format the input as "premise [SEP] hypothesis"
+        inputs = tokenizer(premises, hypotheses, padding=True, truncation=True, return_tensors="pt")
+        inputs['labels'] = torch.tensor(labels, dtype=torch.long)
+        return inputs
 
     loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=nli_collate_fn, shuffle=True)
 
